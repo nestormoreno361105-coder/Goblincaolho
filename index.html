@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Engenhocas T20</title>
+<style>
+body{margin:0;background:#151515;color:#eee;font-family:Georgia,serif}
+.wrap{max-width:1100px;margin:auto;padding:20px}
+.panel{background:#222;border:2px solid #a8843a;border-radius:12px;padding:16px;margin-bottom:16px}
+h1,h2{color:#d4b05b}
+input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#111;color:#fff;border:1px solid #666}
+button{padding:10px 14px;margin:4px;background:#7d1f1f;color:#fff;border:none;border-radius:6px;cursor:pointer}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
+.card{background:#181818;border:1px solid #a8843a;padding:10px;border-radius:8px}
+.small{opacity:.8;font-size:.9em}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>⚙️ Registro de Engenhocas — Tormenta20</h1>
+
+<div class="panel">
+<div class="grid">
+<div><label>Inteligência</label><input id="int" type="number" value="4"></div>
+<div><label>Nome da magia</label><input id="nome"></div>
+<div><label>Círculo</label><select id="circulo"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select></div>
+<div><label>PM Base</label><input id="pm" type="number" value="1"></div>
+<div><label>PM Aprimoramentos</label><input id="apr" type="number" value="0"></div>
+<div><label>Ativações hoje</label><input id="ativ" type="number" value="1"></div>
+</div>
+<label>Observações</label><textarea id="obs"></textarea>
+<button onclick="add()">Adicionar Engenhoca</button>
+<button onclick="exportJSON()">Exportar JSON</button>
+<button onclick="document.getElementById('imp').click()">Importar JSON</button>
+<button onclick="window.print()">Exportar PDF</button>
+<input id="imp" type="file" hidden onchange="importJSON(event)">
+</div>
+
+<div class="panel">
+<h2>Painel</h2>
+<div id="stats"></div>
+</div>
+
+<div class="panel">
+<h2>Engenhocas</h2>
+<div id="lista"></div>
+</div>
+</div>
+
+<script>
+let dados=JSON.parse(localStorage.getItem("engenhocas_t20")||"[]");
+
+function salvar(){
+localStorage.setItem("engenhocas_t20",JSON.stringify(dados));
+render();
+}
+
+function add(){
+let nome=document.getElementById("nome").value||"Sem nome";
+let pm=+document.getElementById("pm").value;
+let apr=+document.getElementById("apr").value;
+let ativ=+document.getElementById("ativ").value;
+dados.push({
+nome,
+circulo:document.getElementById("circulo").value,
+pm,apr,ativ,
+obs:document.getElementById("obs").value
+});
+salvar();
+}
+
+function del(i){
+dados.splice(i,1);
+salvar();
+}
+
+function render(){
+let intel=+document.getElementById("int").value||0;
+document.getElementById("stats").innerHTML=
+`Limite de engenhocas: <b>${intel}</b> |
+ Cadastradas: <b>${dados.length}</b>`;
+
+let html="";
+dados.forEach((e,i)=>{
+let custo=e.pm*100;
+let cdFab=20+e.pm;
+let cdAti=15+e.pm+e.apr+Math.max(0,e.ativ-1)*5;
+html+=`<div class="card">
+<h3>${e.nome}</h3>
+<div>Círculo: ${e.circulo}</div>
+<div>Custo Fabricação: T$ ${custo}</div>
+<div>CD Fabricação: ${cdFab}</div>
+<div>CD Ativação: ${cdAti}</div>
+<div>PM Totais: ${e.pm+e.apr}</div>
+<div class="small">${e.obs||""}</div>
+<button onclick="del(${i})">Excluir</button>
+</div>`;
+});
+document.getElementById("lista").innerHTML=html||"Nenhuma engenhoca cadastrada.";
+}
+function exportJSON(){
+let a=document.createElement('a');
+a.href=URL.createObjectURL(new Blob([JSON.stringify(dados,null,2)],{type:'application/json'}));
+a.download='engenhocas.json';
+a.click();
+}
+function importJSON(ev){
+let f=ev.target.files[0];
+if(!f)return;
+let r=new FileReader();
+r.onload=()=>{dados=JSON.parse(r.result);salvar();};
+r.readAsText(f);
+}
+render();
+</script>
+</body>
+</html>
